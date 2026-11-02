@@ -5,7 +5,8 @@ import robot from "@/assets/robot.webp";
 import logo from "@/assets/logo.webp";
 import {
   ACTIONS, ACTION_MS, GAME_SECONDS, MAX_SEQUENCE, POINTS_PER_PLAY, WIN_SCORE,
-  expandSequence, formatTime, type ActionId,
+  expandSequence, formatTime, hasWon, playSummary, scoreAfterPlay,
+  type ActionId, type PlayResult,
 } from "@/lib/loop-game";
 
 export const Route = createFileRoute("/")({
@@ -60,20 +61,16 @@ function Game() {
   const [repeat, setRepeat] = useState(1);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState<{ id: ActionId; key: number; idx: number } | null>(null);
+  const [preview, setPreview] = useState<{ id: ActionId; key: number } | null>(null);
   const [time, setTime] = useState(GAME_SECONDS);
   const [score, setScore] = useState(0);
   const [muted, setMuted] = useState(false);
   const [help, setHelp] = useState(false);
-  const [done, setDone] = useState<null | "win" | "time">(null);
+  const [result, setResult] = useState<PlayResult | null>(null);
   const runId = useRef(0);
   const timers = useRef<number[]>([]);
-
-  useEffect(() => {
-    if (done) return;
-    const t = window.setInterval(() => setTime((s) => (s <= 1 ? 0 : s - 1)), 1000);
-    return () => clearInterval(t);
-  }, [done]);
-  useEffect(() => { if (time === 0 && !done) setDone("time"); }, [time, done]);
+  const previewTimer = useRef<number | null>(null);
+  const previewKey = useRef(0);
 
   const stop = useCallback(() => {
     runId.current++;
@@ -83,8 +80,27 @@ function Game() {
     setCurrent(null);
   }, []);
 
+  // Tapping an action block makes the robot show that move straight away.
+  const previewAction = (id: ActionId) => {
+    if (previewTimer.current) clearTimeout(previewTimer.current);
+    setPreview({ id, key: ++previewKey.current });
+    previewTimer.current = window.setTimeout(() => setPreview(null), ACTION_MS);
+  };
+
+  useEffect(() => {
+    if (result) return;
+    const t = window.setInterval(() => setTime((s) => (s <= 1 ? 0 : s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [result]);
+
+  useEffect(() => {
+    if (time !== 0 || result) return;
+    stop();
+    setResult({ kind: "time", points: 0, total: score, moves: seq.length, loops: repeat, steps: 0 });
+  }, [time, result, stop, score, seq.length, repeat]);
+
   const play = () => {
-    if (playing || seq.length === 0 || done) return;
+    if (playing || seq.length === 0 || result) return;
     const steps = expandSequence(seq, repeat);
     const id = ++runId.current;
     setPlaying(true);
@@ -97,24 +113,30 @@ function Game() {
     timers.current.push(window.setTimeout(() => {
       if (runId.current !== id) return;
       setPlaying(false); setCurrent(null); timers.current = [];
-      setScore((s) => {
-        const n = Math.min(WIN_SCORE, s + POINTS_PER_PLAY);
-        if (n >= WIN_SCORE) setDone("win");
-        return n;
-      });
+      const total = scoreAfterPlay(score);
+      setScore(total);
+      setResult({ kind: hasWon(total) ? "win" : "play", total, ...playSummary(seq, repeat) });
     }, steps.length * (ACTION_MS + 150)));
   };
 
   const reset = () => {
-    stop(); setSeq([]); setRepeat(1); setScore(0); setTime(GAME_SECONDS); setDone(null);
+    stop();
+    if (previewTimer.current) clearTimeout(previewTimer.current);
+    setPreview(null);
+    setSeq([]); setRepeat(1); setScore(0); setTime(GAME_SECONDS); setResult(null);
   };
 
-  useEffect(() => () => stop(), [stop]);
+  useEffect(() => () => {
+    timers.current.forEach(clearTimeout);
+    if (previewTimer.current) clearTimeout(previewTimer.current);
+  }, []);
 
   const fullscreen = () => {
     if (document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen?.();
   };
+
+  const active = current ?? preview;
 
   return (
     <main className="flex h-screen flex-col overflow-hidden bg-background">
@@ -152,15 +174,15 @@ function Game() {
       {/* Stage */}
       <section className="bg-stage relative flex flex-1 flex-col items-center justify-center">
         <div className="h-6">
-          {current && (
-            <span key={current.key} className="anim-pop inline-block rounded-full bg-card/60 px-3 py-0.5 text-[10px] font-extrabold tracking-widest text-grade">
-              {current.id.toUpperCase()}!
+          {active && (
+            <span key={active.key} className="anim-pop inline-block rounded-full bg-card/60 px-3 py-0.5 text-[10px] font-extrabold tracking-widest text-grade">
+              {active.id.toUpperCase()}!
             </span>
           )}
         </div>
         <div className="relative mt-3">
           <div className="bg-spotlight absolute -bottom-12 left-1/2 h-16 w-[520px] max-w-[90vw] -translate-x-1/2 blur-md" />
-          <div key={current?.key ?? "idle"} className={current ? ACT_ANIM[current.id] : "anim-idle"}>
+          <div key={active?.key ?? "idle"} className={active ? ACT_ANIM[active.id] : "anim-idle"}>
             <img src={robot} alt="Robot" width={512} height={512} className="relative h-[26vh] max-h-[290px] min-h-[150px] w-auto object-contain drop-shadow-xl" />
           </div>
         </div>
@@ -170,9 +192,12 @@ function Game() {
       <section className="-mt-4 shrink-0 rounded-t-3xl border-t border-card bg-card/90 px-4 pb-4 pt-3 backdrop-blur">
         <div className="flex justify-center gap-3">
           {ACTIONS.map((a) => (
-            <button key={a.id} disabled={playing || seq.length >= MAX_SEQUENCE}
-              onClick={() => setSeq((s) => [...s, a.id])}
-              className={`${ACT_BG[a.id]} flex h-[46px] w-[46px] flex-col items-center justify-center rounded-lg text-[8px] font-bold text-primary-foreground shadow-md transition hover:-translate-y-0.5 active:scale-95 disabled:opacity-50`}>
+            <button key={a.id} disabled={playing}
+              onClick={() => {
+                previewAction(a.id);
+                if (seq.length < MAX_SEQUENCE) setSeq((s) => [...s, a.id]);
+              }}
+              className={`${ACT_BG[a.id]} flex h-[46px] w-[46px] flex-col items-center justify-center rounded-lg text-[8px] font-bold text-primary-foreground shadow-md transition hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 ${seq.length >= MAX_SEQUENCE ? "opacity-60" : ""}`}>
               <Thumb size={24} />{a.label}
             </button>
           ))}
@@ -220,29 +245,83 @@ function Game() {
         <Modal onClose={() => setHelp(false)}>
           <h2 className="text-2xl font-extrabold">How to play</h2>
           <ol className="mt-3 list-decimal space-y-1 pl-5 text-left text-sm font-semibold text-muted-foreground">
-            <li>Tap the colored action blocks to add moves to your sequence.</li>
+            <li>Tap the colored action blocks to add moves to your sequence — the robot shows that move right away.</li>
             <li>Tap the red ✕ on a block to remove it.</li>
             <li>Choose how many times to repeat (1–4).</li>
             <li>Press Play to watch the robot dance. Stop interrupts it.</li>
-            <li>Each completed loop earns {POINTS_PER_PLAY} points. Reach {WIN_SCORE} to win!</li>
+            <li>Each completed loop earns {POINTS_PER_PLAY} points and shows your score card.</li>
           </ol>
           <button onClick={() => setHelp(false)} className="mt-5 rounded-full bg-cta px-8 py-2 font-extrabold text-primary-foreground">GOT IT</button>
         </Modal>
       )}
-      {done && (
-        <Modal>
-          <img src={robot} alt="" width={120} height={120} className="anim-jump mx-auto h-28 w-28 object-contain" />
-          <h2 className="mt-2 text-3xl font-extrabold">{done === "win" ? "Great Job!" : "Time's Up!"}</h2>
-          <p className="mt-1 text-sm font-semibold text-muted-foreground">
-            {done === "win" ? "You're a true Loop Artist!" : "Nice try — play again!"}
-          </p>
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-1 font-extrabold">
-            <Star className="h-4 w-4 fill-act-jump text-act-jump" /> {score}
-          </div>
-          <div><button onClick={reset} className="mt-5 rounded-full bg-cta px-8 py-2 font-extrabold text-primary-foreground">PLAY AGAIN</button></div>
-        </Modal>
+      {result && (
+        <ScoreCard result={result} onClose={() => setResult(null)} onReset={reset} />
       )}
     </main>
+  );
+}
+
+function ScoreCard({ result, onClose, onReset }: { result: PlayResult; onClose: () => void; onReset: () => void }) {
+  const title = result.kind === "win" ? "Great Job!" : result.kind === "time" ? "Time's Up!" : "Loop Complete!";
+  const blurb =
+    result.kind === "win" ? "You're a true Loop Artist!" :
+    result.kind === "time" ? "Time ran out — play again!" :
+    `The robot finished every move in your loop.`;
+  const anim = result.kind === "win" ? "anim-jump" : result.kind === "time" ? "anim-wave" : "anim-clap";
+  const pct = Math.min(100, Math.round((result.total / WIN_SCORE) * 100));
+
+  return (
+    <Modal>
+      <p className="text-[10px] font-extrabold tracking-[0.3em] text-grade">SCORE CARD</p>
+      <img src={robot} alt="" width={120} height={120} className={`${anim} mx-auto mt-1 h-24 w-24 object-contain`} />
+      <h2 className="mt-1 text-3xl font-extrabold">{title}</h2>
+      <p className="mt-1 text-sm font-semibold text-muted-foreground">{blurb}</p>
+
+      <div className="mt-4 rounded-2xl border border-seq-border bg-seq-bg px-4 py-2">
+        <Row label="Points earned" value={`+${result.points}`} accent />
+        <Row label="Moves in loop" value={result.moves} />
+        <Row label="Times repeated" value={result.loops} />
+        <Row label="Moves played" value={result.steps} />
+      </div>
+
+      <div className="mt-3">
+        <div className="flex items-center justify-between text-[10px] font-extrabold tracking-wider text-muted-foreground">
+          <span>PROGRESS</span>
+          <span>{pct}%</span>
+        </div>
+        <div className="mt-1 h-2 overflow-hidden rounded-full bg-secondary">
+          <div className="h-full rounded-full bg-repeat" style={{ width: `${pct}%` }} />
+        </div>
+        <p className="mt-1 text-[10px] font-bold text-muted-foreground">
+          {result.total >= WIN_SCORE ? "Goal reached — amazing!" : `${WIN_SCORE - result.total} more points to reach ${WIN_SCORE}`}
+        </p>
+      </div>
+
+      <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-secondary px-5 py-1.5">
+        <Star className="h-5 w-5 fill-act-jump text-act-jump" />
+        <span className="text-xl font-extrabold">{result.total}</span>
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+        {result.kind === "play" && (
+          <button onClick={onClose} className="rounded-full border border-seq-border bg-card px-6 py-2 text-sm font-extrabold transition hover:bg-secondary">
+            KEEP PLAYING
+          </button>
+        )}
+        <button onClick={onReset} className="rounded-full bg-cta px-7 py-2 text-sm font-extrabold text-primary-foreground shadow-[0_10px_22px_-10px] shadow-cta/60">
+          {result.kind === "play" ? "NEW GAME" : "PLAY AGAIN"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function Row({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
+  return (
+    <div className="flex items-center justify-between border-b border-seq-border py-1.5 last:border-0">
+      <span className="text-xs font-bold text-muted-foreground">{label}</span>
+      <span className={`text-sm font-extrabold ${accent ? "text-repeat" : "text-foreground"}`}>{value}</span>
+    </div>
   );
 }
 
