@@ -106,9 +106,11 @@
 }
 @keyframes r-spin {
   0% { transform: scaleX(1) translateY(0); filter: blur(0) }
-  25% { transform: scaleX(.32) translateY(-9px); filter: blur(1.4px) }
+  30% { transform: scaleX(.85) translateY(-4px); filter: blur(0) }
+  45% { transform: scaleX(.14) translateY(-8px); filter: blur(3px) }
   50% { transform: scaleX(-1) translateY(0); filter: blur(0) }
-  75% { transform: scaleX(.32) translateY(-9px); filter: blur(1.4px) }
+  55% { transform: scaleX(.14) translateY(-8px); filter: blur(3px) }
+  70% { transform: scaleX(.85) translateY(-4px); filter: blur(0) }
   100% { transform: scaleX(1) translateY(0); filter: blur(0) }
 }
 @keyframes r-jump {
