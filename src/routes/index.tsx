@@ -181,9 +181,9 @@ function Game() {
 
       {/* Stage */}
       <section className="bg-stage relative flex flex-1 flex-col items-center justify-center">
-        <div className="relative z-20 h-6">
+        <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center">
           {active && (
-            <span key={active.key} className="anim-pop inline-block rounded-full bg-card/60 px-3 py-0.5 text-[10px] font-extrabold tracking-widest text-grade">
+            <span key={active.key} className="anim-pop inline-block rounded-full bg-card/70 px-3 py-1 text-[11px] font-extrabold tracking-widest text-grade">
               {active.id.toUpperCase()}!
             </span>
           )}
