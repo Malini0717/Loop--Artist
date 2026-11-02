@@ -107,9 +107,9 @@
 @keyframes r-spin {
   0% { transform: scaleX(1) translateY(0); filter: blur(0) }
   30% { transform: scaleX(.85) translateY(-4px); filter: blur(0) }
-  45% { transform: scaleX(.14) translateY(-8px); filter: blur(3px) }
+  45% { transform: scaleX(.3) translateY(-8px); filter: blur(2px) }
   50% { transform: scaleX(-1) translateY(0); filter: blur(0) }
-  55% { transform: scaleX(.14) translateY(-8px); filter: blur(3px) }
+  55% { transform: scaleX(.3) translateY(-8px); filter: blur(2px) }
   70% { transform: scaleX(.85) translateY(-4px); filter: blur(0) }
   100% { transform: scaleX(1) translateY(0); filter: blur(0) }
 }

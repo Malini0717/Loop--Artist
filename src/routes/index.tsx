@@ -183,7 +183,7 @@ function Game() {
       <section className="bg-stage relative flex flex-1 flex-col items-center justify-center">
         <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center">
           {active && (
-            <span key={active.key} className="anim-pop inline-block rounded-full bg-card/70 px-3 py-1 text-[11px] font-extrabold tracking-widest text-grade">
+            <span key={active.key} className="anim-pop inline-block rounded-full bg-card px-4 py-1 text-xs font-extrabold tracking-widest text-grade shadow-lg ring-1 ring-seq-border">
               {active.id.toUpperCase()}!
             </span>
           )}
