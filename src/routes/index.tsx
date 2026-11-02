@@ -2,6 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Clock, Star, Volume2, VolumeX, RotateCcw, Maximize, HelpCircle, Play, Square, X } from "lucide-react";
 import robot from "@/assets/robot.webp";
+import robotClap from "@/assets/robot-clap.png";
+import robotSpin from "@/assets/robot-spin.png";
+import robotJump from "@/assets/robot-jump.png";
+import robotWave from "@/assets/robot-wave.png";
 import logo from "@/assets/logo.webp";
 import {
   ACTIONS, ACTION_MS, GAME_SECONDS, MAX_SEQUENCE, POINTS_PER_PLAY, WIN_SCORE,
@@ -29,6 +33,10 @@ const ACT_BG: Record<ActionId, string> = {
 const ACT_ANIM: Record<ActionId, string> = {
   clap: "anim-clap", spin: "anim-spin", jump: "anim-jump", wave: "anim-wave",
 };
+/** Each move has its own drawing of the robot, so the pose changes with the move. */
+const ACT_IMG: Record<ActionId, string> = {
+  clap: robotClap, spin: robotSpin, jump: robotJump, wave: robotWave,
+};
 
 function Index() {
   const [started, setStarted] = useState(false);
@@ -52,8 +60,8 @@ function Intro({ onStart }: { onStart: () => void }) {
   );
 }
 
-function Thumb({ size = 24 }: { size?: number }) {
-  return <img src={robot} alt="" width={size} height={size} style={{ width: size, height: size }} className="object-contain" />;
+function Thumb({ size = 24, src = robot }: { size?: number; src?: string }) {
+  return <img src={src} alt="" width={size} height={size} style={{ width: size, height: size }} className="object-contain" />;
 }
 
 function Game() {
@@ -183,7 +191,7 @@ function Game() {
         <div className="relative mt-3">
           <div className="bg-spotlight absolute -bottom-12 left-1/2 h-16 w-[520px] max-w-[90vw] -translate-x-1/2 blur-md" />
           <div key={active?.key ?? "idle"} className={active ? ACT_ANIM[active.id] : "anim-idle"}>
-            <img src={robot} alt="Robot" width={512} height={512} className="relative h-[26vh] max-h-[290px] min-h-[150px] w-auto object-contain drop-shadow-xl" />
+            <img src={active ? ACT_IMG[active.id] : robot} alt="Robot" width={512} height={512} className="relative h-[26vh] max-h-[290px] min-h-[150px] w-auto object-contain drop-shadow-xl" />
           </div>
         </div>
       </section>
@@ -198,7 +206,7 @@ function Game() {
                 if (seq.length < MAX_SEQUENCE) setSeq((s) => [...s, a.id]);
               }}
               className={`${ACT_BG[a.id]} flex h-[46px] w-[46px] flex-col items-center justify-center rounded-lg text-[8px] font-bold text-primary-foreground shadow-md transition hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 ${seq.length >= MAX_SEQUENCE ? "opacity-60" : ""}`}>
-              <Thumb size={24} />{a.label}
+              <Thumb size={24} src={ACT_IMG[a.id]} />{a.label}
             </button>
           ))}
         </div>
@@ -209,7 +217,7 @@ function Game() {
             )}
             {seq.map((a, i) => (
               <div key={i} className={`${ACT_BG[a]} anim-pop relative flex h-[42px] w-[60px] shrink-0 flex-col items-center justify-center rounded-md text-[8px] font-extrabold text-primary-foreground shadow ${playing && current?.idx === i ? "ring-2 ring-foreground" : ""} ${playing && current?.idx !== i ? "opacity-50" : ""}`}>
-                <Thumb size={22} />{a.toUpperCase()}
+                <Thumb size={22} src={ACT_IMG[a]} />{a.toUpperCase()}
                 {!playing && (
                   <button aria-label="Remove" onClick={() => setSeq((s) => s.filter((_, j) => j !== i))}
                     className="absolute -right-1.5 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
@@ -268,12 +276,13 @@ function ScoreCard({ result, onClose, onReset }: { result: PlayResult; onClose: 
     result.kind === "time" ? "Time ran out — play again!" :
     `The robot finished every move in your loop.`;
   const anim = result.kind === "win" ? "anim-jump" : result.kind === "time" ? "anim-wave" : "anim-clap";
+  const pose = result.kind === "win" ? robotJump : result.kind === "time" ? robotWave : robotClap;
   const pct = Math.min(100, Math.round((result.total / WIN_SCORE) * 100));
 
   return (
     <Modal>
       <p className="text-[10px] font-extrabold tracking-[0.3em] text-grade">SCORE CARD</p>
-      <img src={robot} alt="" width={120} height={120} className={`${anim} mx-auto mt-1 h-24 w-24 object-contain`} />
+      <img src={pose} alt="" width={120} height={120} className={`${anim} mx-auto mt-1 h-24 w-24 object-contain`} />
       <h2 className="mt-1 text-3xl font-extrabold">{title}</h2>
       <p className="mt-1 text-sm font-semibold text-muted-foreground">{blurb}</p>
 
