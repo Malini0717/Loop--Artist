@@ -105,13 +105,13 @@
   78% { transform: translateY(2px) scale(.97,1.04) }
 }
 @keyframes r-spin {
-  0% { transform: scaleX(1) translateY(0); filter: blur(0) }
-  30% { transform: scaleX(.85) translateY(-4px); filter: blur(0) }
-  45% { transform: scaleX(.3) translateY(-8px); filter: blur(2px) }
-  50% { transform: scaleX(-1) translateY(0); filter: blur(0) }
-  55% { transform: scaleX(.3) translateY(-8px); filter: blur(2px) }
-  70% { transform: scaleX(.85) translateY(-4px); filter: blur(0) }
-  100% { transform: scaleX(1) translateY(0); filter: blur(0) }
+  0% { transform: scaleX(1) rotate(0deg); filter: blur(0) }
+  30% { transform: scaleX(.8) rotate(-5deg); filter: blur(0) }
+  45% { transform: scaleX(.35) rotate(-3deg) translateY(-6px); filter: blur(2px) }
+  50% { transform: scaleX(-1) rotate(0deg); filter: blur(0) }
+  55% { transform: scaleX(.35) rotate(3deg) translateY(-6px); filter: blur(2px) }
+  70% { transform: scaleX(.8) rotate(5deg); filter: blur(0) }
+  100% { transform: scaleX(1) rotate(0deg); filter: blur(0) }
 }
 @keyframes r-jump {
   0%,100% { transform: translateY(0) scale(1,1) }
