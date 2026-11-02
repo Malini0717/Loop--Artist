@@ -181,7 +181,7 @@ function Game() {
 
       {/* Stage */}
       <section className="bg-stage relative flex flex-1 flex-col items-center justify-center">
-        <div className="h-6">
+        <div className="relative z-20 h-6">
           {active && (
             <span key={active.key} className="anim-pop inline-block rounded-full bg-card/60 px-3 py-0.5 text-[10px] font-extrabold tracking-widest text-grade">
               {active.id.toUpperCase()}!
