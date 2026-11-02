@@ -37,6 +37,10 @@ const ACT_ANIM: Record<ActionId, string> = {
 const ACT_IMG: Record<ActionId, string> = {
   clap: robotClap, spin: robotSpin, jump: robotJump, wave: robotWave,
 };
+/** On stage the spin uses the standing pose — a wide-armed pose collapses into a sliver when turned. */
+const STAGE_IMG: Record<ActionId, string> = {
+  clap: robotClap, spin: robot, jump: robotJump, wave: robotWave,
+};
 
 function Index() {
   const [started, setStarted] = useState(false);
@@ -191,7 +195,7 @@ function Game() {
         <div className="relative mt-3">
           <div className="bg-spotlight absolute -bottom-12 left-1/2 h-16 w-[520px] max-w-[90vw] -translate-x-1/2 blur-md" />
           <div key={active?.key ?? "idle"} className={active ? ACT_ANIM[active.id] : "anim-idle"}>
-            <img src={active ? ACT_IMG[active.id] : robot} alt="Robot" width={512} height={512} className="relative h-[26vh] max-h-[290px] min-h-[150px] w-auto object-contain drop-shadow-xl" />
+            <img src={active ? STAGE_IMG[active.id] : robot} alt="Robot" width={512} height={512} className="relative h-[26vh] max-h-[290px] min-h-[150px] w-auto object-contain drop-shadow-xl" />
           </div>
         </div>
       </section>
