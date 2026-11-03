@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Clock, Star, Volume2, VolumeX, RotateCcw, Maximize, HelpCircle, Play, Square, X } from "lucide-react";
 import robot from "@/assets/robot.webp";
@@ -60,7 +60,6 @@ function Intro({ onStart }: { onStart: () => void }) {
         className="mt-8 inline-flex h-20 items-center gap-3 rounded-full bg-cta px-12 text-lg font-extrabold tracking-wide text-primary-foreground shadow-[0_14px_30px_-8px] shadow-cta/60 transition hover:brightness-105 active:scale-95">
         <Play className="h-6 w-6 fill-current" /> START ACTIVITY
       </button>
-      <Link to="/recreate" className="mt-5 text-sm font-bold text-grade underline">Recreate a screenshot with AI</Link>
     </main>
   );
 }
