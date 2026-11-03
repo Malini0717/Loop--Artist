@@ -28,7 +28,7 @@ export const Route = createFileRoute("/")({
 });
 
 const ACT_BG: Record<ActionId, string> = {
-  clap: "bg-act-clap", spin: "bg-act-spin", jump: "bg-act-jump", wave: "bg-act-wave",
+  clap: "bg-grad-clap", spin: "bg-grad-spin", jump: "bg-grad-jump", wave: "bg-grad-wave",
 };
 const ACT_ANIM: Record<ActionId, string> = {
   clap: "anim-clap", spin: "anim-spin", jump: "anim-jump", wave: "anim-wave",
@@ -39,7 +39,7 @@ const ACT_IMG: Record<ActionId, string> = {
 };
 /** On stage the spin uses the standing pose — a wide-armed pose collapses into a sliver when turned. */
 const STAGE_IMG: Record<ActionId, string> = {
-  clap: robotClap, spin: robot, jump: robotJump, wave: robotWave,
+  clap: robotClap, spin: robotSpin, jump: robotJump, wave: robotWave,
 };
 
 function Index() {
@@ -193,7 +193,7 @@ function Game() {
           )}
         </div>
         <div className="relative mt-3">
-          <div className="bg-spotlight absolute -bottom-12 left-1/2 h-16 w-[520px] max-w-[90vw] -translate-x-1/2 blur-md" />
+          <div className="bg-spotlight anim-glow absolute -bottom-12 left-1/2 h-16 w-[520px] max-w-[90vw] -translate-x-1/2 blur-md" />
           <div key={active?.key ?? "idle"} className={active ? ACT_ANIM[active.id] : "anim-idle"}>
             <img src={active ? STAGE_IMG[active.id] : robot} alt="Robot" width={512} height={512} className="relative h-[26vh] max-h-[290px] min-h-[150px] w-auto object-contain drop-shadow-xl" />
           </div>
@@ -209,18 +209,18 @@ function Game() {
                 previewAction(a.id);
                 if (seq.length < MAX_SEQUENCE) setSeq((s) => [...s, a.id]);
               }}
-              className={`${ACT_BG[a.id]} flex h-[46px] w-[46px] flex-col items-center justify-center rounded-lg text-[8px] font-bold text-primary-foreground shadow-md transition hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 ${seq.length >= MAX_SEQUENCE ? "opacity-60" : ""}`}>
-              <Thumb size={24} src={ACT_IMG[a.id]} />{a.label}
+              className={`${ACT_BG[a.id]} tile-shine flex h-[64px] w-[64px] flex-col items-center justify-center rounded-2xl text-[10px] font-extrabold text-primary-foreground shadow-lg ring-2 ring-card transition hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 ${seq.length >= MAX_SEQUENCE ? "opacity-60" : ""}`}>
+              <span className={a.id === "spin" ? "anim-orbit" : ""}><Thumb size={32} src={ACT_IMG[a.id]} /></span>{a.label}
             </button>
           ))}
         </div>
         <div className="mx-auto mt-2 flex max-w-[620px] flex-wrap items-center justify-center gap-3">
-          <div className="flex h-[54px] min-w-0 flex-1 items-center gap-2 overflow-x-auto rounded-xl border-2 border-seq-border bg-seq-bg px-1.5">
+          <div className="flex h-[60px] min-w-0 flex-1 items-center gap-2 overflow-x-auto rounded-xl border-2 border-seq-border bg-seq-bg px-1.5">
             {seq.length === 0 && (
               <span className="w-full text-center text-xs font-semibold text-muted-foreground">Tap action blocks above to build your sequence</span>
             )}
             {seq.map((a, i) => (
-              <div key={i} className={`${ACT_BG[a]} anim-pop relative flex h-[42px] w-[60px] shrink-0 flex-col items-center justify-center rounded-md text-[8px] font-extrabold text-primary-foreground shadow ${playing && current?.idx === i ? "ring-2 ring-foreground" : ""} ${playing && current?.idx !== i ? "opacity-50" : ""}`}>
+              <div key={i} className={`${ACT_BG[a]} anim-pop relative flex h-[44px] w-[52px] shrink-0 flex-col items-center justify-center rounded-xl text-[8px] font-extrabold text-primary-foreground shadow ring-2 ring-card ${playing && current?.idx === i ? "ring-2 ring-foreground" : ""} ${playing && current?.idx !== i ? "opacity-50" : ""}`}>
                 <Thumb size={22} src={ACT_IMG[a]} />{a.toUpperCase()}
                 {!playing && (
                   <button aria-label="Remove" onClick={() => setSeq((s) => s.filter((_, j) => j !== i))}
